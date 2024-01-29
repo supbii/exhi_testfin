@@ -91,21 +91,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 vo: !document.getElementById('voMusic').muted,
             };
 
-            if (savedStates.length >= 5) {
-                savedStates.shift(); // 5개 이상이면 가장 오래된 것 제거
+            // 동일한 조합이 이미 저장되었는지 확인
+            const isDuplicate = savedStates.some(state => 
+                Object.keys(state).every(animal => 
+                    state[animal] === currentState[animal]
+                )
+            );
+
+            if (!isDuplicate) {
+                if (savedStates.length >= 5) {
+                    // 5개 이상이면 가장 오래된 것 제거 후 새 조합 추가
+                    savedStates.shift();
+                }
+                savedStates.push(currentState); // 새로운 조합 추가
+                updateSavedCombinationsUI();
             }
-            savedStates.push(currentState);
-            updateSavedCombinationsUI();
+
+            // 새로 저장된 조합의 인덱스를 계산하여 애니메이션 적용
+            const newCombIndex = savedStates.length >= 5 ? 5 : savedStates.length;
+            const newCombElement = document.getElementById(`comb${newCombIndex}`);
+            newCombElement.classList.add('newComb');
+            setTimeout(() => {
+                newCombElement.classList.remove('newComb');
+            }, 1000);
+
+            showSaveConfirmationPopup();
         }
     
+        function showSaveConfirmationPopup() {
+            const popup = document.getElementById('saveConfirmationPopup');
+            popup.style.display = 'block';
+        
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 800);
+        }
+
         // 저장된 조합을 UI에 표시
         function updateSavedCombinationsUI() {
-            savedStates.forEach((state, index) => {
-                const combElement = document.getElementById(`comb${index + 1}`);
-                combElement.textContent = `조합 ${index + 1}`;
-                combElement.onclick = () => loadCombination(index);
-            });
-        }        
+            for (let i = 0; i < 5; i++) {
+                const combElement = document.getElementById(`comb${i + 1}`);
+                if (i < savedStates.length) {
+                    // 저장된 조합의 개수에 따라 텍스트 업데이트
+                    combElement.textContent = `조합 ${i + 1}`;
+                    combElement.onclick = () => loadCombination(i);
+                } else {
+                    // 비어있는 조합 버튼 처리
+                    combElement.textContent = '';
+                    combElement.onclick = null;
+                }
+            }
+        }
     
         // 특정 조합 불러오기
         function loadCombination(index) {
